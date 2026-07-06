@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>AR-визуализация 3D моделей</title>
+
+    <!-- Шрифты и иконки (опционально) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+
+    <style>
+        /* ---------- Общие стили ---------- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #0b0e1a 0%, #1a1f33 100%);
+            /* Можно заменить на фоновое изображение: */
+            /* background: url('background.jpg') no-repeat center center fixed; */
+            /* background-size: cover; */
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* ---------- Карточка-контейнер ---------- */
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 32px 40px 40px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        /* ---------- Шапка ---------- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+            color: #6c8cff;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: -0.4px;
+            background: linear-gradient(135deg, #b7c9ff, #6c8cff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 14px;
+            opacity: 0.6;
+            font-weight: 400;
+            letter-spacing: 0.3px;
+        }
+
+        /* ---------- Приветствие ---------- */
+        .hero {
+            margin-bottom: 32px;
+        }
+
+        .hero h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .hero h1 span {
+            color: #6c8cff;
+        }
+
+        .hero p {
+            font-size: 16px;
+            opacity: 0.7;
+            max-width: 640px;
+            line-height: 1.6;
+        }
+
+        /* ---------- Область 3D-модели ---------- */
+        .model-area {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+        }
+
+        .model-viewer-placeholder {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: radial-gradient(circle at 30% 30%, #2a3050, #0f1322);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.25);
+            font-size: 14px;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+
+        .model-viewer-placeholder i {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        /* Это место займёт <model-viewer> в будущем */
+        #model-viewer-container {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 16px;
+            overflow: hidden;
+            display: none; /* пока скрыт, показываем placeholder */
+        }
+
+        /* ---------- Панель управления ---------- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .controls-left {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 60px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.07);
+            color: #fff;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .btn i {
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: #6c8cff;
+            color: #0b0e1a;
+            border: none;
+            box-shadow: 0 8px 24px rgba(108, 140, 255, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #5a7ae6;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(108, 140, 255, 0.35);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-success {
+            background: #2ecc71;
+            color: #0b0e1a;
+            border: none;
+        }
+
+        .btn-success:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        /* ---------- Секция загрузки (будущий функционал) ---------- */
+        .upload-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+
+        .upload-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .upload-info i {
+            font-size: 20px;
+            opacity: 0.5;
+        }
+
+        .upload-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* ---------- Адаптивность ---------- */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 20px 16px;
+                border-radius: 28px;
+            }
+
+            .hero h1 {
+                font-size: 22px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .controls-left {
+                justify-content: center;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: 14px;
+                justify-content: center;
+            }
+
+            .upload-section {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+            }
+
+            .upload-info {
+                justify-content: center;
+            }
+
+            .upload-actions {
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+
+        <!-- ========== ШАПКА ========== -->
+        <header class="header">
+            <div class="logo-area">
+                <span class="logo-icon"><i class="fas fa-cube"></i></span>
+                <span class="logo-text">AR‑View</span>
+                <span class="tagline">3D &amp; Augmented Reality</span>
+            </div>
+            <div style="font-size: 14px; opacity: 0.5;">
+                <i class="fas fa-phone-alt" style="margin-right: 6px;"></i> Демо-версия
+            </div>
+        </header>
+
+        <!-- ========== ПРИВЕТСТВИЕ ========== -->
+        <section class="hero">
+            <h1>Визуализация 3D-моделей в <span>дополненной реальности</span></h1>
+            <p>
+                Этот сервис позволяет вам просматривать трёхмерные объекты прямо в браузере,
+                а при наличии камеры — размещать их в реальном пространстве с помощью AR.
+                Загрузите свою модель или выберите одну из демонстрационных.
+            </p>
+        </section>
+
+        <!-- ========== ОБЛАСТЬ 3D-МОДЕЛИ ========== -->
+        <div class="model-area">
+            <!-- Плейсхолдер, пока модель не загружена -->
+            <div id="model-placeholder" class="model-viewer-placeholder">
+                <i class="fas fa-cube"></i>
+                <span>Здесь будет 3D-модель</span>
+                <span style="font-size: 12px; opacity: 0.5;">Выберите или загрузите модель</span>
+            </div>
+
+            <!-- Контейнер для <model-viewer> (пока скрыт) -->
+            <div id="model-viewer-container">
+                <!-- Сюда динамически вставится <model-viewer> -->
+            </div>
+        </div>
+
+        <!-- ========== ПАНЕЛЬ УПРАВЛЕНИЯ ========== -->
+        <div class="controls">
+            <div class="controls-left">
+                <!-- Кнопка выбора демо-модели (заглушка) -->
+                <button class="btn btn-secondary" id="demoModelBtn">
+                    <i class="fas fa-cube"></i> Демо-модель
+                </button>
+
+                <!-- Кнопка AR (камера) – пока заглушка -->
+                <button class="btn btn-primary" id="arButton">
+                    <i class="fas fa-vr-cardboard"></i> AR-режим
+                </button>
+            </div>
+
+            <div>
+                <button class="btn btn-outline" id="resetViewBtn">
+                    <i class="fas fa-undo-alt"></i> Сброс
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== СЕКЦИЯ ЗАГРУЗКИ (будущий Firebase / R2) ========== -->
+        <div class="upload-section">
+            <div class="upload-info">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Загрузите свою 3D-модель в формате <strong>.glb</strong> или <strong>.gltf</strong></span>
+            </div>
+            <div class="upload-actions">
+                <button class="btn btn-success" id="uploadBtn">
+                    <i class="fas fa-file-upload"></i> Выбрать файл
+                </button>
+                <!-- Скрытый инпут для загрузки (будет использован позже) -->
+                <input type="file" id="fileInput" accept=".glb,.gltf" style="display: none;" />
+            </div>
+        </div>
+
+        <!-- Небольшой футер (опционально) -->
+        <div style="margin-top: 24px; font-size: 12px; opacity: 0.3; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 16px;">
+            Технологии: WebXR · model-viewer · Firebase (в разработке)
+        </div>
+    </div>
+
+    <!-- ========== ПОДКЛЮЧЕНИЕ JAVASCRIPT (начальная логика) ========== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // Элементы DOM
+            const placeholder = document.getElementById('model-placeholder');
+            const viewerContainer = document.getElementById('model-viewer-container');
+            const demoBtn = document.getElementById('demoModelBtn');
+            const arBtn = document.getElementById('arButton');
+            const resetBtn = document.getElementById('resetViewBtn');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const fileInput = document.getElementById('fileInput');
+
+            // ---------------------------------------------
+            // 1. Заглушка для кнопки "Демо-модель"
+            //    В будущем здесь будет загрузка модели через <model-viewer>
+            // ---------------------------------------------
+            demoBtn.addEventListener('click', function() {
+                // Пока просто переключаем видимость (имитация загрузки)
+                if (placeholder.style.display !== 'none') {
+                    // Скрываем плейсхолдер, показываем контейнер
+                    placeholder.style.display = 'none';
+                    viewerContainer.style.display = 'block';
+                    // Заполняем контейнер заглушкой (позже заменим на реальный model-viewer)
+                    viewerContainer.innerHTML = `
+                        <div style="width:100%; height:100%; background: radial-gradient(circle at 30% 30%, #3a4070, #1a1f33); 
+                                    display:flex; align-items:center; justify-content:center; border-radius:16px; 
+                                    color: rgba(255,255,255,0.4); flex-direction: column; gap: 12px;">
+                            <i class="fas fa-cube" style="font-size: 48px;"></i>
+                            <span>Демо-модель загружена (заглушка)</span>
+                            <span style="font-size:12px; opacity:0.4;">Здесь будет <strong>model-viewer</strong></span>
+                        </div>
+                    `;
+                } else {
+                    // Возвращаем плейсхолдер
+                    placeholder.style.display = 'flex';
+                    viewerContainer.style.display = 'none';
+                    viewerContainer.innerHTML = '';
+                }
+            });
+
+            // ---------------------------------------------
+            // 2. Кнопка AR – пока просто оповещение
+            // ---------------------------------------------
+            arBtn.addEventListener('click', function() {
+                alert('AR-режим будет запущен после подключения model-viewer и WebXR.\nПока это демонстрационная заглушка.');
+                // В дальнейшем: запуск AR-сессии через model-viewer
+            });
+
+            // ---------------------------------------------
+            // 3. Кнопка сброса – возврат к плейсхолдеру
+            // ---------------------------------------------
+            resetBtn.addEventListener('click', function() {
+                placeholder.style.display = 'flex';
+                viewerContainer.style.display = 'none';
+                viewerContainer.innerHTML = '';
+            });
+
+            // ---------------------------------------------
+            // 4. Загрузка файла – открываем диалог
+            // ---------------------------------------------
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    alert(`Файл "${file.name}" выбран.\nВ будущем он будет загружен в Firebase Storage или R2.`);
+                    // Здесь будет логика загрузки и отображения модели
+                }
+                // Сбрасываем инпут, чтобы можно было выбрать тот же файл повторно
+                fileInput.value = '';
+            });
+
+            // ---------------------------------------------
+            // 5. Инициализация (по умолчанию показываем плейсхолдер)
+            // ---------------------------------------------
+            placeholder.style.display = 'flex';
+            viewerContainer.style.display = 'none';
+
+        })();
+    </script>
+
+</body>
+</html>
