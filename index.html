@@ -427,12 +427,6 @@
         arButton.innerHTML = `<i class="fas fa-vr-cardboard"></i> Посмотреть в AR`;
         viewer.appendChild(arButton);
 
-        // ---- Подсказка "Переместите телефон" ----
-        const arPrompt = document.createElement('div');
-        arPrompt.id = 'ar-prompt';
-        arPrompt.innerHTML = `<img src="https://modelviewer.dev/shared-assets/icons/hand.png"> Перемещайте телефон, чтобы разместить модель`;
-        viewer.appendChild(arPrompt);
-
         // ---- Событие загрузки для прогресс-бара ----
         viewer.addEventListener('progress', (event) => {
             const bar = progressBar;
