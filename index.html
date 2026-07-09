@@ -21,7 +21,6 @@
     </script>
     <script type="module">
         import { ModelViewerElement } from '@google/model-viewer';
-        // Регистрируем кастомный элемент (если браузер ещё не зарегистрировал)
         if (!customElements.get('model-viewer')) {
             customElements.define('model-viewer', ModelViewerElement);
         }
@@ -35,9 +34,6 @@
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
             background: linear-gradient(145deg, #0b0e1a 0%, #1a1f33 100%);
-            /* Для фонового изображения раскомментируйте: */
-            /* background: url('background.jpg') no-repeat center center fixed; */
-            /* background-size: cover; */
             color: #ffffff;
             display: flex;
             align-items: center;
@@ -333,7 +329,7 @@
         <p>
             Этот сервис позволяет вам просматривать трёхмерные объекты прямо в браузере,
             а при наличии камеры — размещать их в реальном пространстве с помощью AR.
-            Выберите демо-модель или загрузите свою.
+            Выберите демо-модель или загрузите свою (загрузка собственной модели в текущий момент находится в разработке).
         </p>
     </section>
 
@@ -348,13 +344,13 @@
     <div class="controls">
         <div class="controls-left">
             <button class="btn btn-secondary" id="model1Btn">
-                <i class="fas fa-robot"></i> Астронавт
+                <i class="fas fa-human"></i> Астронавт
             </button>
             <button class="btn btn-secondary" id="model2Btn">
                 <i class="fas fa-chair"></i> Кресло
             </button>
             <button class="btn btn-secondary" id="model3Btn">
-                <i class="fas fa-fish"></i> Фиш (рыба)
+                <i class="fas fa-fish"></i> Рыба
             </button>
         </div>
         <div>
@@ -364,7 +360,7 @@
         </div>
     </div>
 
-    <!-- ===== СЕКЦИЯ ЗАГРУЗКИ (заглушка для Firebase/R2) ===== -->
+    <!-- ===== СЕКЦИЯ ЗАГРУЗКИ (заглушка для R2) ===== -->
     <div class="upload-section">
         <div class="upload-info">
             <i class="fas fa-cloud-upload-alt"></i>
@@ -379,7 +375,7 @@
     </div>
 
     <div style="margin-top: 24px; font-size: 12px; opacity: 0.3; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 16px;">
-        Технологии: WebXR · model-viewer · Firebase (в разработке)
+        Технологии: WebXR · model-viewer · Cloudflare R2 (в разработке)
     </div>
 </div>
 
@@ -490,7 +486,6 @@
     });
 
     // ---- Адаптация под мобильные: при клике на AR-кнопку скрываем подсказку ----
-    // (обработчик делегирования, т.к. кнопка создаётся динамически)
     container.addEventListener('click', (e) => {
         if (e.target.closest('#ar-button')) {
             const prompt = document.getElementById('ar-prompt');
@@ -498,7 +493,6 @@
         }
     });
 
-    console.log('AR-приложение готово!');
 </script>
 
 </body>
