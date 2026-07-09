@@ -329,7 +329,7 @@
         <p>
             Этот сервис позволяет вам просматривать трёхмерные объекты прямо в браузере,
             а при наличии камеры — размещать их в реальном пространстве с помощью AR.
-            Выберите демо-модель или загрузите свою (загрузка собственной модели в текущий момент находится в разработке).
+            Выберите демо-модель или загрузите свою.
         </p>
     </section>
 
@@ -375,23 +375,19 @@
     </div>
 
     <div style="margin-top: 24px; font-size: 12px; opacity: 0.3; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 16px;">
-        Технологии: WebXR · model-viewer · Загрузка файлов (в разработке)
+        Технологии: WebXR · model-viewer · Загрузка собственных файлов (выполняется локально)
     </div>
 </div>
 
 <!-- ===== JAVASCRIPT ===== -->
 <script type="module">
-    // Импортируем model-viewer (уже загружен через importmap)
-    // Создаём экземпляр model-viewer и вставляем в контейнер
-
+    
     const container = document.getElementById('model-viewer-container');
 
     // Функция создания model-viewer с заданным src
     function createModelViewer(src) {
-        // Очищаем контейнер
         container.innerHTML = '';
-
-        // Создаём элемент
+        
         const viewer = document.createElement('model-viewer');
         viewer.setAttribute('src', src);
         viewer.setAttribute('ar', '');
@@ -435,10 +431,8 @@
             }
         });
 
-        // Добавляем viewer в контейнер
         container.appendChild(viewer);
 
-        // Возвращаем ссылку для управления
         return viewer;
     }
 
@@ -465,25 +459,31 @@
         }
     });
 
-    // ---- Загрузка файла (заглушка) ----
-    const uploadBtn = document.getElementById('uploadBtn');
-    const fileInput = document.getElementById('fileInput');
+// ---- Загрузка файла (работает полностью в памяти браузера) ----
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
 
-    uploadBtn.addEventListener('click', () => {
-        fileInput.click();
-    });
+uploadBtn.addEventListener('click', () => {
+    fileInput.click();
+});
 
-    fileInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            alert(`Файл "${file.name}" выбран.\nВ будущем он будет загружен в Firebase Storage или R2.`);
-            // Здесь в будущем можно будет отобразить загруженную модель
-            // Для демонстрации можно создать Object URL и загрузить в model-viewer:
-            // const url = URL.createObjectURL(file);
-            // currentViewer = createModelViewer(url);
+fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        const url = URL.createObjectURL(file);
+        
+        if (currentViewer) {
+            currentViewer.remove();
+            currentViewer = null;
         }
-        fileInput.value = ''; // сброс
-    });
+        
+        currentViewer = createModelViewer(url);
+        
+        console.log(`Загружена модель: ${file.name}`);
+    }
+    // Сбрасываем поле ввода, чтобы можно было загрузить тот же файл повторно
+    fileInput.value = '';
+});
 
     // ---- Адаптация под мобильные: при клике на AR-кнопку скрываем подсказку ----
     container.addEventListener('click', (e) => {
